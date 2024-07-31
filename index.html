@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Controle de Refeições</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+    .header {
+      background-color: #343a40;
+      color: white;
+      padding: 10px 0;
+    }
+    .header a {
+      color: white;
+      margin: 0 15px;
+      text-decoration: none;
+    }
+    .container {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      margin-top: 20px;
+    }
+    .btn-custom {
+      margin: 5px;
+    }
+    .header-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      padding: 10px;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .header-buttons a.btn-light {
+      color: black;
+      background-color: #ffffff;
+      border: 1px solid #343a40;
+    }
+    .header-buttons a.btn-light:hover {
+      color: black;
+      background-color: #f8f9fa;
+      border: 1px solid #343a40;
+    }
+    .resumo-diario {
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .total-nota {
+      background-color: #ffffff;
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="container d-flex flex-column align-items-center">
+      <h1>Controle de Refeições</h1>
+      <div class="header-buttons">
+        <a href="registro.html" class="btn btn-primary btn-custom"><i class="fas fa-utensils"></i> Registrar Refeição</a>
+        <a href="relatorio.html" class="btn btn-success btn-custom"><i class="fas fa-chart-line"></i> Gerar Relatório</a>
+        <a href="configuracao.html" class="btn btn-info btn-custom"><i class="fas fa-cog"></i> Configurações</a>
+        <a href="analise.html" class="btn btn-warning btn-custom"><i class="fas fa-chart-pie"></i> Análises</a>
+        <a href="login.html" class="btn btn-light btn-custom"><i class="fas fa-sign-in-alt"></i> Conecte-se</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container mt-4">
+    <h2 class="text-center">Bem-vindo ao Controle de Refeições</h2>
+    <p class="text-center">Gerencie e acompanhe suas refeições de forma eficiente.</p>
+
+    <div class="row mt-4">
+      <div class="col-md-6 resumo-diario">
+        <h3>Resumo Diário</h3>
+        <p>Veja o resumo das refeições registradas hoje:</p>
+        <ul>
+          <li>Almoços: 10</li>
+          <li>Jantas: 5</li>
+          <li>Lanches: 3</li>
+          <li>Refrigerantes: 4</li>
+        </ul>
+        <div class="total-nota">
+          <h4>Total Nota Fiscal do Mês</h4>
+          <select id="mes" class="form-control mb-2">
+            <option value="01">Janeiro</option>
+            <option value="02">Fevereiro</option>
+            <option value="03">Março</option>
+            <option value="04">Abril</option>
+            <option value="05">Maio</option>
+            <option value="06">Junho</option>
+            <option value="07">Julho</option>
+            <option value="08">Agosto</option>
+            <option value="09">Setembro</option>
+            <option value="10">Outubro</option>
+            <option value="11">Novembro</option>
+            <option value="12">Dezembro</option>
+          </select>
+          <p id="totalNota">R$ 0,00</p>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <h3>Estatísticas Recentes</h3>
+        <canvas id="statsChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <footer class="text-center mt-4 mb-4">
+    <p>&copy; 2024 Controle de Refeições. Todos os direitos reservados.</p>
+  </footer>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const ctx = document.getElementById('statsChart').getContext('2d');
+      const statsChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Almoços', 'Jantas', 'Lanches', 'Refrigerantes'],
+          datasets: [{
+            label: 'Consumo de Hoje',
+            data: [10, 5, 3, 4],
+            backgroundColor: [
+              'rgba(75, 192, 192, 0.2)',
+              'rgba(54, 162, 235, 0.2)',
+              'rgba(255, 206, 86, 0.2)',
+              'rgba(153, 102, 255, 0.2)'
+            ],
+            borderColor: [
+              'rgba(75, 192, 192, 1)',
+              'rgba(54, 162, 235, 1)',
+              'rgba(255, 206, 86, 1)',
+              'rgba(153, 102, 255, 1)'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+
+      const mealPrices = {
+        lunch: 25,
+        dinner: 20,
+        snack: 10,
+        soda: 5
+      };
+
+      const calculateTotalNota = async (month) => {
+        try {
+          const response = await fetch(`/api/meals?month=${month}&year=2024`);
+          const meals = await response.json();
+
+          if (response.ok) {
+            let total = 0;
+            meals.forEach(meal => {
+              total += meal.lunch * mealPrices.lunch;
+              total += meal.dinner * mealPrices.dinner;
+              total += meal.snack * mealPrices.snack;
+              total += meal.soda * mealPrices.soda;
+            });
+            document.getElementById('totalNota').textContent = `R$ ${total.toFixed(2)}`;
+          } else {
+            document.getElementById('totalNota').textContent = 'Erro ao calcular';
+          }
+        } catch (error) {
+          document.getElementById('totalNota').textContent = 'Erro ao calcular';
+        }
+      };
+
+      document.getElementById('mes').addEventListener('change', (e) => {
+        calculateTotalNota(e.target.value);
+      });
+
+      // Calcular o total inicial para o mês atual
+      const currentMonth = new Date().getMonth() + 1;
+      document.getElementById('mes').value = currentMonth.toString().padStart(2, '0');
+      calculateTotalNota(currentMonth.toString().padStart(2, '0'));
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerar Relatório</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.14/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+    .container {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .table thead th {
+      background-color: #343a40;
+      color: white;
+    }
+    .btn-success, .btn-primary {
+      width: 100%;
+    }
+    .btn-primary {
+      margin-top: 20px;
+    }
+    .back-button {
+      margin-bottom: 20px;
+    }
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+    }
+    .action-buttons .btn {
+      width: 48%;
+    }
+    .modal-dialog {
+      max-width: 400px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container mt-5">
+    <a href="index.html" class="btn btn-secondary back-button"><i class="fas fa-arrow-left"></i> Voltar à Página Inicial</a>
+    <h1 class="text-center">Gerar Relatório</h1>
+    <form id="relatorio-form" class="mb-4">
+      <div class="form-row">
+        <div class="form-group col-md-6">
+          <label for="month">Mês:</label>
+          <select id="month" name="month" class="form-control" required>
+            <option value="01">Janeiro</option>
+            <option value="02">Fevereiro</option>
+            <option value="03">Março</option>
+            <option value="04">Abril</option>
+            <option value="05">Maio</option>
+            <option value="06">Junho</option>
+            <option value="07">Julho</option>
+            <option value="08">Agosto</option>
+            <option value="09">Setembro</option>
+            <option value="10">Outubro</option>
+            <option value="11">Novembro</option>
+            <option value="12">Dezembro</option>
+          </select>
+        </div>
+        <div class="form-group col-md-6">
+          <label for="year">Ano:</label>
+          <input type="number" id="year" name="year" class="form-control" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group col-md-6">
+          <button type="submit" class="btn btn-success"><i class="fas fa-chart-line"></i> Gerar Relatório</button>
+        </div>
+        <div class="form-group col-md-6">
+          <button type="button" id="print-pdf" class="btn btn-primary"><i class="fas fa-print"></i> Imprimir em PDF</button>
+        </div>
+      </div>
+    </form>
+    <div id="relatorio" class="mb-4"></div>
+  </div>
+
+  <!-- Modal de Edição -->
+  <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editModalLabel">Editar Registro</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="edit-form">
+            <input type="hidden" id="edit-id">
+            <div class="mb-3">
+              <label for="edit-date" class="form-label">Data</label>
+              <input type="text" class="form-control" id="edit-date" disabled>
+            </div>
+            <div class="mb-3">
+              <label for="edit-lunch" class="form-label">Almoços</label>
+              <input type="number" class="form-control" id="edit-lunch">
+            </div>
+            <div class="mb-3">
+              <label for="edit-dinner" class="form-label">Jantas</label>
+              <input type="number" class="form-control" id="edit-dinner">
+            </div>
+            <div class="mb-3">
+              <label for="edit-snack" class="form-label">Lanches</label>
+              <input type="number" class="form-control" id="edit-snack">
+            </div>
+            <div class="mb-3">
+              <label for="edit-soda" class="form-label">Refrigerantes</label>
+              <input type="number" class="form-control" id="edit-soda">
+            </div>
+            <button type="submit" class="btn btn-primary">Salvar</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const relatorioForm = document.getElementById('relatorio-form');
+      const relatorioDiv = document.getElementById('relatorio');
+      const printPdfButton = document.getElementById('print-pdf');
+      const editModal = new bootstrap.Modal(document.getElementById('editModal'), {});
+
+      if (relatorioForm) {
+        relatorioForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+
+          const month = document.getElementById('month').value;
+          const year = document.getElementById('year').value;
+
+          try {
+            const response = await fetch(`/api/meals?month=${month}&year=${year}`);
+            const meals = await response.json();
+
+            if (response.ok) {
+              relatorioDiv.innerHTML = `
+                <div class="table-responsive">
+                  <table class="table table-bordered table-hover">
+                    <thead class="thead-dark">
+                      <tr>
+                        <th>Data</th>
+                        <th>Almoços</th>
+                        <th>Jantas</th>
+                        <th>Lanches</th>
+                        <th>Refrigerantes</th>
+                        <th>Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${meals.map(meal => `
+                        <tr>
+                          <td>${meal.date}</td>
+                          <td>${meal.lunch}</td>
+                          <td>${meal.dinner}</td>
+                          <td>${meal.snack}</td>
+                          <td>${meal.soda}</td>
+                          <td class="action-buttons">
+                            <button class="btn btn-warning btn-sm edit-btn" data-id="${meal.id}" data-date="${meal.date}" data-lunch="${meal.lunch}" data-dinner="${meal.dinner}" data-snack="${meal.snack}" data-soda="${meal.soda}"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-danger btn-sm delete-btn" data-id="${meal.id}"><i class="fas fa-trash"></i></button>
+                          </td>
+                        </tr>
+                      `).join('')}
+                    </tbody>
+                  </table>
+                </div>
+              `;
+
+              // Adicionar eventos aos botões de edição e exclusão
+              document.querySelectorAll('.edit-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                  const id = e.currentTarget.dataset.id;
+                  const date = e.currentTarget.dataset.date;
+                  const lunch = e.currentTarget.dataset.lunch;
+                  const dinner = e.currentTarget.dataset.dinner;
+                  const snack = e.currentTarget.dataset.snack;
+                  const soda = e.currentTarget.dataset.soda;
+
+                  document.getElementById('edit-id').value = id;
+                  document.getElementById('edit-date').value = date;
+                  document.getElementById('edit-lunch').value = lunch;
+                  document.getElementById('edit-dinner').value = dinner;
+                  document.getElementById('edit-snack').value = snack;
+                  document.getElementById('edit-soda').value = soda;
+
+                  editModal.show();
+                });
+              });
+
+              document.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', async (e) => {
+                  const id = e.currentTarget.dataset.id;
+                  if (confirm('Tem certeza que deseja excluir este registro?')) {
+                    try {
+                      const deleteResponse = await fetch(`/api/meals/${id}`, {
+                        method: 'DELETE',
+                      });
+                      if (deleteResponse.ok) {
+                        e.currentTarget.closest('tr').remove();
+                        alert('Registro excluído com sucesso!');
+                      } else {
+                        alert('Erro ao excluir o registro!');
+                      }
+                    } catch (error) {
+                      console.error('Erro ao excluir o registro:', error);
+                      alert('Erro ao excluir o registro!');
+                    }
+                  }
+                });
+              });
+            } else {
+              relatorioDiv.innerHTML = `<div class="alert alert-danger">Erro ao buscar as refeições: ${meals.error}</div>`;
+            }
+          } catch (error) {
+            relatorioDiv.innerHTML = `<div class="alert alert-danger">Erro ao buscar as refeições: ${error.message}</div>`;
+          }
+        });
+      }
+
+      if (printPdfButton) {
+        printPdfButton.addEventListener('click', () => {
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF();
+          doc.autoTable({ html: '#relatorio table' });
+          doc.save('relatorio.pdf');
+        });
+      }
+
+      document.getElementById('edit-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const id = document.getElementById('edit-id').value;
+        const lunch = document.getElementById('edit-lunch').value;
+        const dinner = document.getElementById('edit-dinner').value;
+        const snack = document.getElementById('edit-snack').value;
+        const soda = document.getElementById('edit-soda').value;
+
+        try {
+          const updateResponse = await fetch(`/api/meals/${id}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ lunch, dinner, snack, soda })
+          });
+          if (updateResponse.ok) {
+            const updatedMeal = await updateResponse.json();
+            const row = document.querySelector(`.edit-btn[data-id="${id}"]`).closest('tr');
+            row.children[1].textContent = updatedMeal.lunch;
+            row.children[2].textContent = updatedMeal.dinner;
+            row.children[3].textContent = updatedMeal.snack;
+            row.children[4].textContent = updatedMeal.soda;
+            editModal.hide();
+            alert('Registro atualizado com sucesso!');
+          } else {
+            alert('Erro ao atualizar o registro!');
+          }
+        } catch (error) {
+          console.error('Erro ao atualizar o registro:', error);
+          alert('Erro ao atualizar o registro!');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

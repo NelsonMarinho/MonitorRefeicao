@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <h1>Login</h1>
+  <form id="login-form">
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required>
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required>
+    <button type="submit">Login</button>
+  </form>
+  <script src="js/scripts.js"></script>
+  <script>
+    document.getElementById('login-form').addEventListener('submit', function(event) {
+      event.preventDefault();
+      const loginData = {
+        username: document.getElementById('username').value,
+        password: document.getElementById('password').value
+      };
+
+      fetch('http://localhost:3000/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(loginData)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('Login bem-sucedido!');
+          window.location.href = 'index.html'; // Redireciona para a página inicial
+        } else {
+          alert('Falha no login: ' + data.message);
+        }
+      })
+      .catch(error => console.error('Erro no login:', error));
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Análise Mensal de Refeições</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+  <style>
+    body {
+      background-color: #f8f9fa;
+    }
+    .container {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+    }
+    .chart-container {
+      position: relative;
+      height: 400px;
+      width: 100%;
+    }
+    .btn-primary, .btn-back {
+      margin-top: 20px;
+    }
+    .btn-back {
+      background-color: #6c757d;
+      color: white;
+      text-decoration: none;
+    }
+    .btn-back:hover {
+      background-color: #5a6268;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="container mt-5">
+    <h1 class="text-center mb-4">Análise Mensal de Refeições</h1>
+    <a href="index.html" class="btn btn-back"><i class="fas fa-arrow-left"></i> Voltar à Página Inicial</a>
+    <div id="analise-mensal">
+      <div class="chart-container">
+        <h3 class="text-center">Almoço e Janta</h3>
+        <canvas id="mealsChart"></canvas>
+      </div>
+      <div class="chart-container mt-4">
+        <h3 class="text-center">Refrigerantes</h3>
+        <canvas id="sodaChart"></canvas>
+      </div>
+      <div class="chart-container mt-4">
+        <h3 class="text-center">Lanches</h3>
+        <canvas id="snacksChart"></canvas>
+      </div>
+    </div>
+    <button id="print-pdf" class="btn btn-primary mt-3"><i class="fas fa-print"></i> Imprimir em PDF</button>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.14/jspdf.plugin.autotable.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const analiseMensal = document.getElementById('analise-mensal');
+      const printPdfButton = document.getElementById('print-pdf');
+
+      const formatDate = (dateStr) => {
+        const [year, month, day] = dateStr.split('-');
+        return `${day}.${month}.${year}`;
+      };
+
+      const fetchMeals = async () => {
+        const month = '07'; // Exemplo: julho
+        const year = '2024'; // Exemplo: 2024
+        try {
+          const response = await fetch(`/api/meals?month=${month}&year=${year}`);
+          const meals = await response.json();
+
+          if (response.ok) {
+            const labels = meals.map(meal => formatDate(meal.date));
+            const lunchData = meals.map(meal => meal.lunch);
+            const dinnerData = meals.map(meal => meal.dinner);
+            const snackData = meals.map(meal => meal.snack);
+            const sodaData = meals.map(meal => meal.soda);
+
+            // Configurações do plugin de rótulos de dados
+            const dataLabelPlugin = {
+              plugins: {
+                datalabels: {
+                  anchor: 'end',
+                  align: 'top',
+                  formatter: Math.round,
+                  font: {
+                    weight: 'bold'
+                  }
+                }
+              }
+            };
+
+            // Gráfico de Almoço e Janta
+            const mealsCtx = document.getElementById('mealsChart').getContext('2d');
+            const mealsChart = new Chart(mealsCtx, {
+              type: 'bar',
+              data: {
+                labels: labels,
+                datasets: [
+                  {
+                    label: 'Almoços',
+                    data: lunchData,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 2
+                  },
+                  {
+                    label: 'Jantas',
+                    data: dinnerData,
+                    backgroundColor: 'rgba(255, 99, 132, 0.6)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 2
+                  }
+                ]
+              },
+              options: {
+                scales: {
+                  y: {
+                    beginAtZero: true
+                  }
+                },
+                responsive: true,
+                plugins: {
+                  legend: {
+                    position: 'top',
+                  },
+                  title: {
+                    display: true,
+                    text: 'Consumo de Almoços e Jantas'
+                  },
+                  datalabels: {
+                    anchor: 'end',
+                    align: 'top',
+                    formatter: Math.round,
+                    font: {
+                      weight: 'bold'
+                    },
+                    color: '#444'
+                  }
+                }
+              },
+              plugins: [ChartDataLabels]
+            });
+
+            // Gráfico de Refrigerantes
+            const sodaCtx = document.getElementById('sodaChart').getContext('2d');
+            const sodaChart = new Chart(sodaCtx, {
+              type: 'bar',
+              data: {
+                labels: labels,
+                datasets: [
+                  {
+                    label: 'Refrigerantes',
+                    data: sodaData,
+                    backgroundColor: 'rgba(255, 206, 86, 0.6)',
+                    borderColor: 'rgba(255, 206, 86, 1)',
+                    borderWidth: 2
+                  }
+                ]
+              },
+              options: {
+                scales: {
+                  y: {
+                    beginAtZero: true
+                  }
+                },
+                responsive: true,
+                plugins: {
+                  legend: {
+                    position: 'top',
+                  },
+                  title: {
+                    display: true,
+                    text: 'Consumo de Refrigerantes'
+                  },
+                  datalabels: {
+                    anchor: 'end',
+                    align: 'top',
+                    formatter: Math.round,
+                    font: {
+                      weight: 'bold'
+                    },
+                    color: '#444'
+                  }
+                }
+              },
+              plugins: [ChartDataLabels]
+            });
+
+            // Gráfico de Lanches
+            const snacksCtx = document.getElementById('snacksChart').getContext('2d');
+            const snacksChart = new Chart(snacksCtx, {
+              type: 'bar',
+              data: {
+                labels: labels,
+                datasets: [
+                  {
+                    label: 'Lanches',
+                    data: snackData,
+                    backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 2
+                  }
+                ]
+              },
+              options: {
+                scales: {
+                  y: {
+                    beginAtZero: true
+                  }
+                },
+                responsive: true,
+                plugins: {
+                  legend: {
+                    position: 'top',
+                  },
+                  title: {
+                    display: true,
+                    text: 'Consumo de Lanches'
+                  },
+                  datalabels: {
+                    anchor: 'end',
+                    align: 'top',
+                    formatter: Math.round,
+                    font: {
+                      weight: 'bold'
+                    },
+                    color: '#444'
+                  }
+                }
+              },
+              plugins: [ChartDataLabels]
+            });
+          } else {
+            analiseMensal.innerHTML = `<div class="alert alert-danger">Erro ao buscar as refeições: ${meals.error}</div>`;
+          }
+        } catch (error) {
+          analiseMensal.innerHTML = `<div class="alert alert-danger">Erro ao buscar as refeições: ${error.message}</div>`;
+        }
+      };
+
+      if (printPdfButton) {
+        printPdfButton.addEventListener('click', () => {
+          const { jsPDF } = window.jspdf;
+          const doc = new jsPDF();
+          doc.text("Análise Mensal de Refeições", 10, 10);
+
+          const charts = [
+            document.getElementById('mealsChart'),
+            document.getElementById('sodaChart'),
+            document.getElementById('snacksChart')
+          ];
+
+          charts.forEach((chartCanvas, index) => {
+            const chartImage = chartCanvas.toDataURL('image/png', 1.0);
+            doc.addImage(chartImage, 'PNG', 10, 20 + (index * 70), 180, 60);
+          });
+
+          doc.save('analise-mensal.pdf');
+        });
+      }
+
+      fetchMeals();
+    });
+  </script>
+</body>
+</html>

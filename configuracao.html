@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Configuração de Preços</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    .back-button {
+      display: inline-block;
+      margin-bottom: 20px;
+      padding: 10px 20px;
+      font-size: 16px;
+      font-weight: bold;
+      text-align: center;
+      color: #ffffff;
+      background-color: #007bff;
+      border: none;
+      border-radius: 5px;
+      text-decoration: none;
+      transition: background-color 0.3s ease;
+    }
+    .back-button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <h1>Configuração de Preços</h1>
+  <a href="index.html" class="back-button"><i class="fas fa-arrow-left"></i> Voltar à Página Inicial</a>
+  <form id="configuracao-form">
+    <label for="lunch-price">Preço do Almoço:</label>
+    <input type="number" id="lunch-price" name="lunch-price" required>
+    <label for="dinner-price">Preço do Jantar:</label>
+    <input type="number" id="dinner-price" name="dinner-price" required>
+    <label for="snack-price">Preço do Lanche:</label>
+    <input type="number" id="snack-price" name="snack-price" required>
+    <label for="soda-price">Preço do Refrigerante:</label>
+    <input type="number" id="soda-price" name="soda-price" required>
+    <button type="submit">Salvar Configurações</button>
+  </form>
+  <script src="js/scripts.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      fetch('http://localhost:3000/api/prices')
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Erro ao carregar as configurações');
+          }
+          return response.json();
+        })
+        .then(data => {
+          document.getElementById('lunch-price').value = data.lunchPrice;
+          document.getElementById('dinner-price').value = data.dinnerPrice;
+          document.getElementById('snack-price').value = data.snackPrice;
+          document.getElementById('soda-price').value = data.sodaPrice;
+        })
+        .catch(error => console.error(error));
+
+      document.getElementById('configuracao-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const configuracoes = {
+          lunchPrice: parseFloat(document.getElementById('lunch-price').value),
+          dinnerPrice: parseFloat(document.getElementById('dinner-price').value),
+          snackPrice: parseFloat(document.getElementById('snack-price').value),
+          sodaPrice: parseFloat(document.getElementById('soda-price').value)
+        };
+        
+        fetch('http://localhost:3000/api/prices', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(configuracoes)
+        })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Erro ao salvar as configurações');
+          }
+          return response.json();
+        })
+        .then(data => {
+          alert('Configurações salvas com sucesso!');
+        })
+        .catch(error => console.error(error));
+      });
+    });
+  </script>
+</body>
+</html>
